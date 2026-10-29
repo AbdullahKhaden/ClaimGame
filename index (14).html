@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Scary Hours | RMI Game Night</title>
+<style>
+:root{--bg:#11110f;--panel:#1b1b17;--panel2:#24241e;--ink:#f6f0e5;--muted:#b8b09f;--orange:#f28c28;--green:#b7d7a8;--red:#ef9a87;--line:#3b392f}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 85% 0%,#30251a 0,transparent 35%),var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
+header{border-bottom:1px solid var(--line);padding:18px 16px}
+.wrap{max-width:760px;margin:auto}
+.brand{display:flex;justify-content:space-between;align-items:center;gap:16px}
+.eyebrow{color:var(--orange);font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:.7rem}
+h1{font-size:clamp(1.8rem,6vw,2.8rem);line-height:1;margin:6px 0}
+h2{margin:0 0 10px;font-size:1.25rem}
+p{color:var(--muted);margin:6px 0}
+.pumpkin{font-size:2.2rem}
+main{padding:18px 14px 50px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}
+.field{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+label{font-weight:700;font-size:.9rem}
+input[type=text]{width:100%;background:#10100e;border:1px solid #514c3d;color:var(--ink);padding:13px;border-radius:9px;font:inherit}
+input[type=text]:focus{outline:2px solid var(--orange)}
+button{border:1px solid var(--line);background:var(--panel2);color:var(--ink);border-radius:10px;padding:12px 16px;font:inherit;font-weight:700;cursor:pointer}
+button.primary{background:var(--orange);color:#20150b;border-color:var(--orange)}
+button:disabled{opacity:.4;cursor:not-allowed}
+.muted{font-size:.88rem;color:var(--muted)}
+.hidden{display:none!important}
+.err{color:var(--red);min-height:1.4em;font-size:.9rem}
+
+/* score bar */
+.scorebar{position:sticky;top:0;z-index:5;background:#0d0d0bee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);padding:10px 14px;padding-top:calc(10px + env(safe-area-inset-top,0px))}
+.scorebar .wrap{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.teamlabel{font-weight:800;font-size:1.05rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sub{font-size:.78rem;color:var(--muted)}
+.pts{text-align:right;line-height:1}
+.pts b{font-size:2.3rem;color:var(--orange);display:block}
+.pts span{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+/* chips */
+.chips{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.chip{padding:10px 0;text-align:center;border-radius:10px;font-weight:800;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+.chip.sel{outline:2px solid var(--orange)}
+.chip.ok{background:#22301f;border-color:#52684b;color:var(--green)}
+.chip.bad{background:#34201b;border-color:#7a4a40;color:var(--red)}
+.chip small{display:block;font-size:.62rem;font-weight:600;opacity:.8}
+
+/* round form */
+.roundtop{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.status{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.76rem;color:var(--muted)}
+.pick{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0}
+.pick button{padding:18px 0;font-size:1.15rem;letter-spacing:.06em}
+.pick button.on{background:var(--orange);color:#20150b;border-color:var(--orange)}
+.jumper{display:flex;gap:10px;align-items:flex-start;background:#151511;border:1px solid var(--line);border-radius:10px;padding:12px;margin:14px 0;font-weight:500}
+.jumper input{width:20px;height:20px;margin-top:2px;accent-color:var(--orange)}
+.jumper.off{opacity:.5}
+.result{border-radius:12px;padding:14px;border:1px solid var(--line);margin:12px 0}
+.result.ok{background:#1b2619;border-color:#52684b}
+.result.bad{background:#2a1a17;border-color:#7a4a40}
+.result h3{margin:0 0 6px;font-size:1.3rem}
+.result.ok h3{color:var(--green)}.result.bad h3{color:var(--red)}
+.lines{margin:10px 0 0;padding:0;list-style:none}
+.lines li{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line);color:var(--ink);font-size:.95rem}
+.lines li:last-child{border:0;font-weight:800;color:var(--orange);font-size:1.05rem}
+.note{padding:12px 14px;border-left:3px solid var(--orange);background:#272016;color:#e8d6bd;border-radius:5px;font-size:.92rem;margin-top:12px}
+.hostlink{background:none;border:0;color:var(--muted);font-size:.78rem;font-weight:500;text-decoration:underline;padding:6px 0;cursor:pointer}
+footer{text-align:center;padding:20px;color:var(--muted);font-size:.8rem}
+</style>
+</head>
+<body>
+
+<!-- STEP 1: team name -->
+<div id="joinView">
+<header><div class="wrap brand"><div><div class="eyebrow">Risk Management & Insurance • Game Night</div><h1>SCARY HOURS <span style="color:var(--orange)">☾</span></h1><div class="muted">Real or fake? Guess the payout. Win the loot.</div></div><div class="pumpkin" aria-hidden="true">🎃</div></div></header>
+<main class="wrap">
+  <div class="panel">
+    <h2>Join the game</h2>
+    <p>Pick your team name. One person per team uses this screen. You'll lock in every answer as you go and find out right away how you did.</p>
+    <div class="field"><label for="teamName">Team name</label><input id="teamName" type="text" maxlength="40" placeholder="e.g. The Risky Pumpkins" autocomplete="off"></div>
+    <p class="err" id="joinErr" aria-live="polite"></p>
+    <button class="primary" id="startBtn" style="width:100%">Start playing</button>
+  </div>
+  <div class="panel">
+    <h2>How scoring works</h2>
+    <ul class="lines" style="margin-top:0">
+      <li><span>Right Real or Fake call</span><span>+10</span></li>
+      <li><span>Payout guess within 25%</span><span>+10</span></li>
+      <li><span>Closest payout guess</span><span>+30</span></li>
+      <li><span>Claim Jumper (once per team)</span><span>×2</span></li>
+    </ul>
+    <p class="muted">If you call a claim REAL, you must also guess the payout. Once you lock in an answer, it's final.</p>
+  </div>
+</main>
+</div>
+
+<!-- STEP 2: game -->
+<div id="gameView" class="hidden">
+<div class="scorebar"><div class="wrap">
+  <div style="min-width:0"><div class="teamlabel" id="teamLabel"></div><div class="sub" id="progressLabel"></div></div>
+  <div class="pts"><b id="totalPts">0</b><span>points</span></div>
+</div></div>
+<main class="wrap">
+  <div class="panel">
+    <div class="roundtop"><h2 style="margin:0">Pick the claim on screen</h2></div>
+    <div class="chips" id="chips" style="margin-top:12px"></div>
+  </div>
+  <div class="panel" id="roundPanel"></div>
+  <div style="text-align:center"><button class="hostlink" id="resetLink">Host: reset this device</button></div>
+</main>
+</div>
+
+<footer>Made for RMI • A little spooky. A little risky. 🎃</footer>
+
+<script>
+/* ===== SETTINGS ===== */
+// Code the host types to (a) award the "closest guess" bonus or (b) reset a device.
+// CHANGE THIS before the event. It lives in the page source, so it's a convenience lock only.
+const HOST_CODE = "pumpkin24";
+
+// Points (match the slides)
+const PTS_CALL = 10, PTS_WITHIN = 10, PTS_CLOSEST = 30, WITHIN_PCT = 0.25;
+
+/* ===== ANSWER KEY (from the host-only deck) =====
+   real:true  -> claim is real, `target` is the payout (est:true means it's an estimate, no published figure)
+   cur: currency label shown to teams */
+const ROUNDS = {
+ 1:{real:true, cur:"£",   target:945,     est:false,title:"Dentures, Well Done",             note:"£945 paid. Source: Ageas 2016 list, reported by the Blackpool Gazette."},
+ 2:{real:false,cur:"£",                              title:"Can You Hear Me Now? Ask the Fox",note:"Never happened. Invented for tonight. Animal-takes-item claims are common, so it feels real."},
+ 3:{real:true, cur:"£",   target:450,     est:true, title:"Between a Cow and a Very Dark Place",note:"No payout was published. The insurer replaced the phone in full, so we scored against an estimate of about £450 (the price of an iPhone of that era). Source: mobile insurer's weirdest claims of 2012."},
+ 4:{real:true, cur:"£",   target:437,     est:false,title:"Skype Now Comes With Spit-Up",    note:"£437 paid (about $705). Source: RIAS list via Insurance Business."},
+ 5:{real:false,cur:"$",                              title:"Curd Your Enthusiasm",            note:"Never happened. Invented for tonight. A Wisconsin-flavored fake."},
+ 6:{real:true, cur:"NZ$", target:3488,    est:false,title:"Pins and Needles, Literally",     note:"NZ$3,488 paid. Source: Southern Cross Pet Insurance NZ, strangest claims of 2019."},
+ 7:{real:false,cur:"$",                              title:"Dog Food Dinner Plans",           note:"A famous urban legend that never happened. Fact-checked by Insurance Business."},
+ 8:{real:true, cur:"£",   target:7500,    est:false,title:"The Herd Next Door",              note:"£7,500 paid. Source: Ageas 2016 list. Largest published payout of the night."},
+ 9:{real:false,cur:"£",                              title:"Polly Wants a Patio Set",         note:"Never happened. Invented for tonight."},
+10:{real:true, cur:"£",   target:650,     est:true, title:"Frozen Squirrel Express",         note:"No payout was published, so we scored against an estimate of about £650 (windscreen with sensors plus interior cleaning). Source: Norwich Union (now Aviva) car claims list, about 2006."},
+11:{real:false,cur:"£",                              title:"The Starter That Wouldn't Quit",  note:"Never happened. Invented for tonight."},
+12:{real:true, cur:"£",   target:1000000, est:true, title:"Fast-Setting, Slow Commute",      note:"No total was published, so we scored against an estimate of about £1,000,000 (69 vehicles at roughly £15,000 each). Source: Allianz UK unusual claims of 2019."}
+};
+const N = 12;
+
+/* ===== STATE ===== */
+const STORE = "scaryHours_v2";
+const $ = id => document.getElementById(id);
+let S = load();           // {team, rounds:{n:{call,guess,jumper,closest}}}
+let active = null;        // round number being viewed
+let draft = {call:null, guess:"", jumper:false, confirming:false};
+let hostOK = false;       // host code entered this session
+
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE)) || {team:"",rounds:{}} }catch(e){ return {team:"",rounds:{}} } }
+function save(){ try{ localStorage.setItem(STORE, JSON.stringify(S)) }catch(e){} }
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = (cur,v) => cur + Number(v).toLocaleString("en-US");
+const pad = n => String(n).padStart(2,"0");
+
+/* ===== SCORING ===== */
+function scoreRound(n){
+  const r = S.rounds[n], k = ROUNDS[n];
+  if(!r) return null;
+  const correct = r.call === (k.real ? "REAL" : "FAKE");
+  let callPts = correct ? PTS_CALL : 0, guessPts = 0, within = false;
+  if(correct && k.real){
+    within = Math.abs(r.guess - k.target) <= WITHIN_PCT * k.target;
+    if(r.closest) guessPts = PTS_CLOSEST;       // closest replaces the "within 25%" bonus (per host cheat sheet)
+    else if(within) guessPts = PTS_WITHIN;
+  }
+  const mult = r.jumper ? 2 : 1;
+  return {correct, within, callPts, guessPts, mult, total:(callPts+guessPts)*mult};
+}
+function totalPoints(){ let t=0; for(let n=1;n<=N;n++){ const s=scoreRound(n); if(s) t+=s.total; } return t; }
+const jumperRound = () => { for(let n=1;n<=N;n++) if(S.rounds[n]?.jumper) return n; return null; };
+
+/* ===== RENDER ===== */
+function render(){
+  const joined = !!S.team;
+  $("joinView").classList.toggle("hidden", joined);
+  $("gameView").classList.toggle("hidden", !joined);
+  if(!joined) return;
+  $("teamLabel").textContent = S.team;
+  const done = Object.keys(S.rounds).length;
+  $("progressLabel").textContent = done===N ? "All 12 claims locked" : `${done} of ${N} claims locked`;
+  $("totalPts").textContent = totalPoints();
+  renderChips();
+  renderRound();
+}
+
+function renderChips(){
+  $("chips").innerHTML = Array.from({length:N},(_,i)=>{
+    const n=i+1, s=scoreRound(n);
+    const cls = s ? (s.correct?"ok":"bad") : "";
+    return `<button class="chip ${cls} ${n===active?"sel":""}" data-n="${n}">${n}<small>${s?(s.correct?"✓ "+s.total+" pts":"✗ 0 pts"):"open"}</small></button>`;
+  }).join("");
+  $("chips").querySelectorAll(".chip").forEach(b=>b.onclick=()=>openRound(Number(b.dataset.n)));
+}
+
+function openRound(n){
+  active = n;
+  draft = {call:null, guess:"", jumper:false, confirming:false};
+  renderChips(); renderRound();
+}
+
+function renderRound(){
+  const p = $("roundPanel");
+  if(active===null){
+    const next = Array.from({length:N},(_,i)=>i+1).find(n=>!S.rounds[n]);
+    if(next){ active = next; renderChips(); }
+    else { p.innerHTML = `<h2>That's all 12 claims! 🎃</h2><p>Final score: <b style="color:var(--orange);font-size:1.4rem">${totalPoints()}</b> points. Show this screen to the host for the prize shop.</p>`; return; }
+  }
+  const n = active, k = ROUNDS[n];
+  if(S.rounds[n]) return renderResult(n);
+
+  const usedElsewhere = jumperRound()!==null;
+  p.innerHTML = `
+    <div class="roundtop"><h2 style="margin:0">Claim ${pad(n)}</h2><span class="status">Not locked</span></div>
+    <p>Real or fake?Call it when the host shows the claim.</p>
+    <div class="pick">
+      <button id="bReal">REAL</button><button id="bFake">FAKE</button>
+    </div>
+    <div class="field hidden" id="guessField">
+      <label for="guess">It's real, so guess the payout (${esc(k.cur)})</label>
+      <input id="guess" type="text" inputmode="decimal" placeholder="Number only, e.g. 450" autocomplete="off">
+    </div>
+    <label class="jumper ${usedElsewhere?"off":""}" id="jumperBox">
+      <input type="checkbox" id="jumper" ${usedElsewhere?"disabled":""}>
+      <span><b>Claim Jumper</b> — doubles every point you earn this round. One use per team${usedElsewhere?" (already used)":""}.</span>
+    </label>
+    <p class="err" id="err" aria-live="polite"></p>
+    <button class="primary" id="lockBtn" style="width:100%" disabled>Lock in answer</button>
+    <p class="muted" style="text-align:center">Answers are final once locked.</p>`;
+
+  const sync = ()=>{
+    $("bReal").classList.toggle("on", draft.call==="REAL");
+    $("bFake").classList.toggle("on", draft.call==="FAKE");
+    $("guessField").classList.toggle("hidden", draft.call!=="REAL");
+    const ready = draft.call==="FAKE" || (draft.call==="REAL" && parseGuess(draft.guess)!==null);
+    $("lockBtn").disabled = !ready;
+    $("lockBtn").textContent = draft.confirming ? "Tap again to lock it in" : "Lock in answer";
+    $("err").textContent = "";
+  };
+  $("bReal").onclick=()=>{draft.call="REAL";draft.confirming=false;sync();setTimeout(()=>$("guess").focus(),0)};
+  $("bFake").onclick=()=>{draft.call="FAKE";draft.confirming=false;sync()};
+  $("guess").oninput=e=>{draft.guess=e.target.value;draft.confirming=false;sync()};
+  $("jumper").onchange=e=>{draft.jumper=e.target.checked};
+  $("lockBtn").onclick=()=>{
+    if(!draft.confirming){ draft.confirming=true; sync(); return; }
+    const guess = draft.call==="REAL" ? parseGuess(draft.guess) : null;
+    if(draft.call==="REAL" && guess===null){ $("err").textContent="Enter a payout guess (numbers only)."; return; }
+    S.rounds[n] = {call:draft.call, guess, jumper: draft.jumper && jumperRound()===null, closest:false};
+    save();
+    render();
+  };
+  sync();
+}
+
+function parseGuess(v){
+  const s = String(v).replace(/[^0-9.]/g,"");
+  if(!s) return null;
+  const x = Number(s);
+  return isFinite(x) && x>0 ? x : null;
+}
+
+function renderResult(n){
+  const r=S.rounds[n], k=ROUNDS[n], s=scoreRound(n), p=$("roundPanel");
+  const lines=[];
+  lines.push(`<li><span>Real or Fake call (${r.call})</span><span>${s.correct?"+"+PTS_CALL:"0"}</span></li>`);
+  if(k.real && s.correct){
+    if(r.closest) lines.push(`<li><span>Closest payout guess</span><span>+${PTS_CLOSEST}</span></li>`);
+    else lines.push(`<li><span>Payout guess within 25%</span><span>${s.within?"+"+PTS_WITHIN:"0"}</span></li>`);
+  }
+  if(r.jumper) lines.push(`<li><span>Claim Jumper</span><span>×2</span></li>`);
+  lines.push(`<li><span>Round total</span><span>${s.total} pts</span></li>`);
+
+  let headline = s.correct ? "Correct!" : "Not quite.";
+  let verdict = `This claim was <b>${k.real?"REAL":"FAKE"}</b>.`;
+  let guessInfo = "";
+  if(k.real && r.call==="REAL"){
+    guessInfo = `<p>Your guess: <b>${money(k.cur,r.guess)}</b> · ${k.est?"Estimated payout":"Actual payout"}: <b>${money(k.cur,k.target)}</b></p>`;
+  } else if(k.real){
+    guessInfo = `<p>The payout was ${k.est?"estimated at":""} <b>${money(k.cur,k.target)}</b>.</p>`;
+  }
+
+  const canAward = k.real && s.correct;
+  p.innerHTML = `
+    <div class="roundtop"><h2 style="margin:0">Claim ${pad(n)} · ${esc(k.title)}</h2><span class="status">Locked</span></div>
+    <div class="result ${s.correct?"ok":"bad"}">
+      <h3>${headline}</h3>
+      <div style="color:var(--ink)">${verdict}</div>
+      ${guessInfo}
+      <ul class="lines">${lines.join("")}</ul>
+    </div>
+    <div class="note">${esc(k.note)}</div>
+    ${canAward?`<div style="margin-top:10px"><button class="hostlink" id="closestBtn">Host: ${r.closest?"remove":"award"} closest-guess bonus</button></div>`:""}`;
+  const cb=$("closestBtn");
+  if(cb) cb.onclick=()=>{
+    if(!askHost()) return;
+    r.closest=!r.closest; save(); render();
+  };
+}
+
+/* ===== HOST CODE (only used for closest bonus + reset) ===== */
+function askHost(){
+  if(hostOK) return true;
+  const c = prompt("Host code:");
+  if(c===null) return false;
+  if(c.trim()===HOST_CODE){ hostOK=true; return true; }
+  alert("Wrong code."); return false;
+}
+
+/* ===== EVENTS ===== */
+$("startBtn").onclick = ()=>{
+  const name = $("teamName").value.trim();
+  if(!name){ $("joinErr").textContent="Enter a team name first."; return; }
+  S = {team:name, rounds:{}}; save(); active=null; render();
+};
+$("teamName").addEventListener("keydown",e=>{ if(e.key==="Enter") $("startBtn").click(); });
+$("resetLink").onclick = ()=>{
+  if(!askHost()) return;
+  if(confirm("Erase this team and all its answers on this device?")){ S={team:"",rounds:{}}; save(); active=null; $("teamName").value=""; render(); }
+};
+
+render();
+</script>
+</body>
+</html>
